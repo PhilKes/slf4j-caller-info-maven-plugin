@@ -15,12 +15,14 @@ Add the plugin to your `pom.xml`:
             <artifactId>slf4j-caller-info-maven-plugin</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <configuration>
-                <!-- Optional, the shown default values are used if not present--> 
+            <!-- Optional, the shown default values are used if not present--> 
                 <methodMdcParameter>callerMethod</methodMdcParameter>
                 <lineMdcParameter>callerLine</lineMdcParameter>
                 <!-- Whether or not to inject method and/or source code line number -->
                 <injectMethod>true</injectMethod>
                 <injectLineNumber>true</injectLineNumber>
+                <!-- Regex for specifying which packages/classfiles should be injected into -->
+                <filterClasses>.*</filterClasses>
             </configuration>
             <executions>
                 <execution>
@@ -32,12 +34,22 @@ Add the plugin to your `pom.xml`:
         </plugin>
     </plugins>
 </build>
+
 ```
+The plugin is executed on a `mvn clean install` after the ` maven-compiler-plugin` or can be explicitly run with:
+```shell
+mvn slf4j-caller-info:inject
+```
+
 
 ## Dependencies
 - [ASM](https://asm.ow2.io/) for Java bytecode manipulation
 - [Apache Commons IO](https://commons.apache.org/proper/commons-io/) for FileUtils
 - Built with Java 17
 
+
+# TODOs 
+- Runtime speed comparison to [Logging Pattern Caller Information](https://logging.apache.org/log4j/2.x/performance.html) 
+- 
 
 This project is licensed under the terms of the [GPL license](./LICENSE.md).

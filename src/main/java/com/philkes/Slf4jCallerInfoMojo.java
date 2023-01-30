@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * Mojo to scan the code for SLF4J Log statements and inject caller-information (Method name, Line number)
  * into the log via the Mapped Diagnostic Context
  */
-@Mojo(name = "inject-caller-info", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
+@Mojo(name = "inject", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
 public class Slf4jCallerInfoMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "true")
@@ -35,16 +35,20 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.directory}", readonly = true)
     File target;
 
+    @Parameter(defaultValue = ".*")
+    String filterClasses;
+
     public void execute() throws MojoExecutionException {
         Log log = getLog();
-        if(!injectMethod && !injectLineNumber){
+        if (!injectMethod && !injectLineNumber) {
             log.warn("Both 'injectMethod' and 'injectLineNumber' is set to 'false', therefore execution is skipped.");
+            return;
         }
-        List<String> mandatoryLogPatternParameters= new ArrayList<>();
-        if(injectMethod){
+        List<String> mandatoryLogPatternParameters = new ArrayList<>();
+        if (injectMethod) {
             mandatoryLogPatternParameters.add(methodMdcParameter);
         }
-        if(injectLineNumber){
+        if (injectLineNumber) {
             mandatoryLogPatternParameters.add(lineMdcParameter);
         }
         log.info(String.format("Make sure to add the MDC parameters %s to your logging pattern, otherwise they wont be printed in your logs",
@@ -52,7 +56,7 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
                         .collect(Collectors.joining("\", \"", "\"", "\""))));
 
         try {
-            new CallerInfoLogsClassWriter(target, methodMdcParameter, lineMdcParameter, injectMethod, injectLineNumber, log)
+            new CallerInfoLogsClassWriter(target, filterClasses, methodMdcParameter, lineMdcParameter, injectMethod, injectLineNumber, log)
                     .execute();
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -1,6 +1,7 @@
 package com.philkes;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.*;
 import org.apache.maven.plugin.logging.Log;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -17,6 +18,8 @@ import static com.philkes.AddCallerInfoToLogsAdapter.SLF4J_LOGGER_FQN;
 public class CallerInfoLogsClassWriter {
 
     private final File targetClassDir;
+    private final String filterClasses;
+
     private final String methodMdcParameter;
     private final String lineMdcParameter;
 
@@ -24,8 +27,9 @@ public class CallerInfoLogsClassWriter {
     private final boolean injectLineNumber;
     private final Log log;
 
-    public CallerInfoLogsClassWriter(File target, String methodMdcParameter, String lineMdcParameter, boolean injectMethod, boolean injectLineNumber, Log log) throws IOException {
-        targetClassDir = new File(target.toPath() + "/classes/");
+    public CallerInfoLogsClassWriter(File target, String filterClasses, String methodMdcParameter, String lineMdcParameter, boolean injectMethod, boolean injectLineNumber, Log log) throws IOException {
+        this.targetClassDir = new File(target.toPath() + "/classes/");
+        this.filterClasses = filterClasses;
         this.injectMethod = injectMethod;
         this.injectLineNumber = injectLineNumber;
         this.methodMdcParameter = methodMdcParameter;
@@ -48,11 +52,19 @@ public class CallerInfoLogsClassWriter {
     }
 
     public void execute() throws IOException {
-        log.info(String.format("Searching for %s usages in all .class files in '%s'", SLF4J_LOGGER_FQN, targetClassDir.toPath()));
+        log.info(String.format("Searching for %s usages in all .class files in '%s' with filterClasses='%s'", SLF4J_LOGGER_FQN, targetClassDir.toPath(), filterClasses));
         if (!targetClassDir.isDirectory()) {
             throw new IllegalArgumentException(String.format("Path '%s' is not a valid target/classes directory!", targetClassDir.toPath()));
         }
-        Collection<File> files = FileUtils.listFiles(targetClassDir, new String[]{"class"}, true);
+
+        Collection<File> files = FileUtils.listFiles(targetClassDir,
+                new AbstractFileFilter() {
+                    @Override
+                    public boolean accept(File file) {
+                        String format = String.format(".*%s\\.class", filterClasses);
+                        return file.toString().matches(format);
+                    }
+                }, DirectoryFileFilter.DIRECTORY);
         for (File classFile : files) {
             Files.write(classFile.toPath(), addCallerInfoToLogs(classFile), StandardOpenOption.WRITE);
         }
