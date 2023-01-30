@@ -52,4 +52,4 @@ mvn slf4j-caller-info:inject
 - Runtime speed comparison to [Logging Pattern Caller Information](https://logging.apache.org/log4j/2.x/performance.html) 
 - 
 
-This project is licensed under the terms of the [GPL license](./LICENSE.md).
+This project is licensed under the terms of the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.txt).
