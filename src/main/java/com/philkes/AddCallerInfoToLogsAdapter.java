@@ -8,11 +8,13 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 
 import java.util.Objects;
 
-import static org.objectweb.asm.Opcodes.ASM4;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.*;
 
+/**
+ * ClassVisitor searching for {@code org/slf4j/Logger} log statements in every method of the class
+ *  and injects the caller-information with {@code org/slf4j/MDC#put()} calls before every log statement
+ */
 public class AddCallerInfoToLogsAdapter extends ClassVisitor {
-
 
     public static final String SLF4J_MDC_FQN = "org/slf4j/MDC";
     public static final String SLF4J_MDC_PUT_METHOD_NAME = "put";
@@ -20,16 +22,20 @@ public class AddCallerInfoToLogsAdapter extends ClassVisitor {
     public static final String SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR = "(Ljava/lang/String;)V";
     public static final String SLF4J_MDC_PUT_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;)V";
     public static final String SLF4J_LOGGER_FQN = "org/slf4j/Logger";
+
     private final String methodMdcParameter;
     private final String lineMdcParameter;
 
     private final boolean injectMethod;
     private final boolean injectLineNumber;
 
+    /**
+     * Keeping track of how many log statements have been found in the class for logging purposes
+     */
     private int counter = 0;
 
     public AddCallerInfoToLogsAdapter(ClassVisitor cv, String methodMdcParameter, String lineMdcParameter, boolean injectMethod, boolean injectLineNumber) {
-        super(ASM4, cv);
+        super(ASM7, cv);
         this.methodMdcParameter = methodMdcParameter;
         this.lineMdcParameter = lineMdcParameter;
         this.injectMethod = injectMethod;
@@ -49,11 +55,14 @@ public class AddCallerInfoToLogsAdapter extends ClassVisitor {
     }
 
     class AddCallerInfoToMDCTransformer extends GeneratorAdapter {
+        /**
+         * Keeping track of the last processed {@code LINENUMBER} command in the bytecode
+         */
+        private Integer currentLineNumber = -1;
+
         AddCallerInfoToMDCTransformer(MethodVisitor delegate, int access, String name, String desc) {
             super(Opcodes.ASM5, delegate, access, name, desc);
         }
-
-        private Integer currentLineNumber = -1;
 
         @Override
         public void visitLineNumber(int line, Label start) {
@@ -62,7 +71,7 @@ public class AddCallerInfoToLogsAdapter extends ClassVisitor {
         }
 
         /**
-         * Looks for {@code org/slf4j/Logger} calls to {@code info(),warn(),error(),debug(),trace()} and adds
+         * Searches for {@code org/slf4j/Logger} calls to {@code info(),warn(),error(),debug(),trace()} and adds
          * the current method + line number into the MDC context which can be used to output the caller information
          * of the log statement.
          *
