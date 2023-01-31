@@ -1,4 +1,4 @@
-package com.philkes;
+package com.philkes.plugins.slf4j.callerinfo;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;

@@ -1,4 +1,4 @@
-package com.philkes;
+package com.philkes.plugins.slf4j.callerinfo;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.*;
@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 
-import static com.philkes.AddCallerInfoToLogsAdapter.SLF4J_LOGGER_FQN;
+import static com.philkes.plugins.slf4j.callerinfo.AddCallerInfoToLogsAdapter.SLF4J_LOGGER_FQN;
 
 /**
  * Utilizing ASM {@link ClassReader} and {@link ClassWriter} to modify the compiled Java classes

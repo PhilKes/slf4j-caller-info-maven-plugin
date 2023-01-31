@@ -1,4 +1,4 @@
-package com.philkes;
+package com.philkes.plugins.slf4j.callerinfo;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
