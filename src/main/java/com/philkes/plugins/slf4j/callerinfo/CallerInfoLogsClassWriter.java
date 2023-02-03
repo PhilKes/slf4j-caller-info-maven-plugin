@@ -24,25 +24,22 @@ public class CallerInfoLogsClassWriter {
     private final File targetClassDir;
     private final String filterClasses;
 
-    private final String methodMdcParameter;
-    private final String lineMdcParameter;
+    private final String injectionMdcParameter;
+    private final String injection;
 
-    private final boolean injectMethod;
-    private final boolean injectLineNumber;
     private final Log log;
 
-    public CallerInfoLogsClassWriter(File target, String filterClasses, String methodMdcParameter, String lineMdcParameter, boolean injectMethod, boolean injectLineNumber, Log log) throws IOException {
+    public CallerInfoLogsClassWriter(File target, String filterClasses, String injectionMdcParameter, String injection, Log log) throws IOException {
         this.targetClassDir = target;
         this.filterClasses = filterClasses;
-        this.injectMethod = injectMethod;
-        this.injectLineNumber = injectLineNumber;
-        this.methodMdcParameter = methodMdcParameter;
-        this.lineMdcParameter = lineMdcParameter;
+        this.injectionMdcParameter = injectionMdcParameter;
+        this.injection = injection;
         this.log = log;
     }
 
     /**
      * Uses {@link AddCallerInfoToLogsAdapter} to inject caller-information via MDC to given class
+     *
      * @param classFile .class File in target directory
      * @throws IOException if {@code classFile} is not a valid .class File
      */
@@ -50,8 +47,7 @@ public class CallerInfoLogsClassWriter {
         log.debug(String.format("Searching for log statements in %s", classFile.toPath()));
         ClassReader reader = new ClassReader(new FileInputStream((classFile)));
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-        AddCallerInfoToLogsAdapter callerInfoLogAdapter = new AddCallerInfoToLogsAdapter(writer, methodMdcParameter, lineMdcParameter,
-                injectMethod, injectLineNumber);
+        AddCallerInfoToLogsAdapter callerInfoLogAdapter = new AddCallerInfoToLogsAdapter(writer, classFile, injectionMdcParameter, injection);
         reader.accept(callerInfoLogAdapter, ClassReader.EXPAND_FRAMES);
         int logStatementsFound = callerInfoLogAdapter.getLogStatementsCounter();
         if (logStatementsFound > 0) {
@@ -62,11 +58,13 @@ public class CallerInfoLogsClassWriter {
 
     /**
      * Loops through {@link #targetClassDir} directory recursively with the given {@link #filterClasses} filter and
-     *  writes the injected class files back to the target directory
+     * writes the injected class files back to the target directory
+     *
      * @throws IOException if {@link #targetClassDir} contains invalid {@code .class} files
      */
     public void execute() throws IOException {
-        log.info(String.format("Searching for %s usages in all .class files in %s with filterClasses='%s'", SLF4J_LOGGER_FQN, targetClassDir.toPath(), filterClasses));
+        log.info(String.format("Searching for %s usages in all .class files in %s with filterClasses='%s', injection='%s'",
+                SLF4J_LOGGER_FQN, targetClassDir.toPath(), filterClasses, injection));
         if (!targetClassDir.isDirectory()) {
             throw new IllegalArgumentException(String.format("Path %s is not a valid target/classes directory!", targetClassDir.toPath()));
         }

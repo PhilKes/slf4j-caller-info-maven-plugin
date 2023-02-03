@@ -9,28 +9,21 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+
+import static com.philkes.plugins.slf4j.callerinfo.AddCallerInfoToLogsAdapter.*;
 
 /**
- * Mojo to scan the code for SLF4J Log statements and inject caller-information (Method name, Line number)
+ * Mojo to scan the code for SLF4J Log statements and inject caller-information
  * into the log via the Mapped Diagnostic Context
  */
 @Mojo(name = "inject", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
 public class Slf4jCallerInfoMojo extends AbstractMojo {
 
-    @Parameter(defaultValue = "true")
-    Boolean injectMethod;
+    @Parameter(defaultValue = "%class:%line")
+    String injection;
 
-    @Parameter(defaultValue = "true")
-    Boolean injectLineNumber;
-
-    @Parameter(defaultValue = "callerMethod")
-    String methodMdcParameter;
-
-    @Parameter(defaultValue = "callerLine")
-    String lineMdcParameter;
+    @Parameter(defaultValue = "callerInformation")
+    String injectionMdcParameter;
 
     @Parameter(defaultValue = "${project.build.outputDirectory}")
     File target;
@@ -40,23 +33,23 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException {
         Log log = getLog();
-        if (!injectMethod && !injectLineNumber) {
-            log.warn("Both 'injectMethod' and 'injectLineNumber' is set to 'false', therefore execution is skipped.");
+        if (injection.isEmpty()) {
+            log.warn("'injection' is set to empty string, therefore execution is skipped.");
             return;
+        } else {
+            String testFormat = injection;
+            for (String conversionWord : CONVERSIONS) {
+                testFormat = testFormat.replace(conversionWord, "");
+            }
+            if (testFormat.contains("%")) {
+                log.warn("There is a `%` character in the 'injection' parameter," +
+                        " without a valid conversion word afterwards, the '%' will be printed in the log statement.");
+                log.warn(String.format("Available conversion words: %s, current 'injection': %s", String.join(", ", CONVERSIONS), injection));
+            }
         }
-        List<String> mandatoryLogPatternParameters = new ArrayList<>();
-        if (injectMethod) {
-            mandatoryLogPatternParameters.add(methodMdcParameter);
-        }
-        if (injectLineNumber) {
-            mandatoryLogPatternParameters.add(lineMdcParameter);
-        }
-        log.info(String.format("Make sure to add the MDC parameters %s to your logging pattern, otherwise they wont be printed in your logs",
-                mandatoryLogPatternParameters.stream()
-                        .collect(Collectors.joining("\", \"", "\"", "\""))));
-
+        log.info(String.format("Make sure to add the MDC parameter '%s' to your logging pattern, otherwise they wont be printed in your logs", injectionMdcParameter));
         try {
-            new CallerInfoLogsClassWriter(target, filterClasses, methodMdcParameter, lineMdcParameter, injectMethod, injectLineNumber, log)
+            new CallerInfoLogsClassWriter(target, filterClasses, injectionMdcParameter, injection, log)
                     .execute();
         } catch (IOException e) {
             throw new RuntimeException(e);

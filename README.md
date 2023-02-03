@@ -1,9 +1,16 @@
 # slfj4-caller-info-maven-plugin
 Maven plugin to inject caller-information (Method name + Source code line number) to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (info, warn, error, debug, trace).
 
-This is done by injecting `MDC.put(...)` calls before every SLF4J log invocation, putting the method name and source code line number hardcoded into the compiled `.class` files. This allows to conveniently print out where exactly in the code the log statement originates from for every single log statement, without any overhead or performance loss, by simply adding the Mapped Diagnostic Context ([MDC](https://logback.qos.ch/manual/mdc.html)) parameters `callerMethod` and `callerLine` to your logging-pattern configuration. It can therefore be used with any SLF4J implementation, such as `logback`, `log4j2`, etc.
+
+## Description
+The caller-information injection is done with `MDC.put(...)` calls before every SLF4J log invocation, putting the method name and source code line number hardcoded into the compiled `.class` files. This allows to conveniently print out where exactly in the code the log statement originates from for every single log statement, without any overhead or performance loss, by simply adding the Mapped Diagnostic Context ([MDC](https://logback.qos.ch/manual/mdc.html)) parameters `callerMethod` and `callerLine` to your logging-pattern configuration. It can therefore be used with any SLF4J implementation, such as `logback`, `log4j2`, etc.
 
 Since this plugin executes before runtime, there is no performance loss to calculate the current method + line number like when using the [%method](https://logback.qos.ch/manual/layouts.html#method) or [%line](https://logback.qos.ch/manual/layouts.html#line) parameter in your logging pattern, that looks for the caller-information on the stacktrace during runtime.
+
+## Performance
+### TODO: Add basic performance diagram
+The benchmarking was done with [JMH](https://github.com/openjdk/jmh) based on log4j's [log4j-perf](https://github.com/apache/logging-log4j2) module.
+For more details about the benchmarks see the [benchmark README.md](./benchmark/README.md).
 
 ## Usage
 Add the plugin to your `pom.xml`:
@@ -112,7 +119,13 @@ public class LoggingTest {
     }
 }
 ```
-
+mvn archetype:generate \
+-DinteractiveMode=false \
+-DarchetypeGroupId=org.openjdk.jmh \
+-DarchetypeArtifactId=jmh-java-benchmark-archetype \
+-DgroupId=com.philkes.plugins \
+-DartifactId=slf4j-caller-info-maven-plugin-benchmark \
+-Dversion=1.0
 ## Dependencies
 - [ASM](https://asm.ow2.io/) for Java bytecode manipulation
 - [Apache Commons IO](https://commons.apache.org/proper/commons-io/) for FileUtils

@@ -34,6 +34,7 @@ public class Slf4jCallerInfoMojoTest {
         String msg = "This is a test message";
         new LoggingTest().log(msg);
         int infoLogLineNumber = 13; // see LoggingTest class log.info() call line number
+        String className = "LoggingTest.class";
         String methodName = "log";
         // Check if all log statements have the correct MDC properties
         for (Level level : new Level[]{Level.INFO, Level.WARN, Level.ERROR, Level.DEBUG, Level.TRACE}) {
@@ -41,8 +42,8 @@ public class Slf4jCallerInfoMojoTest {
             assertEquals(1, logEvents.size());
             ILoggingEvent logEvent = logEvents.get(0);
             Map<String, String> mdcPropertyMap = logEvent.getMDCPropertyMap();
-            assertEquals(methodName, mdcPropertyMap.get("callerMethod"));
-            assertEquals(infoLogLineNumber++,  Integer.parseInt(mdcPropertyMap.get("callerLine")));
+            assertEquals(String.format("%s:%s",className,infoLogLineNumber++), mdcPropertyMap.get("callerInformation"));
+//            assertEquals(infoLogLineNumber++,  Integer.parseInt(mdcPropertyMap.get("callerLine")));
         }
 
     }

@@ -6,45 +6,62 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
+import java.io.File;
 import java.util.Objects;
 
 import static org.objectweb.asm.Opcodes.*;
 
 /**
  * ClassVisitor searching for {@code org/slf4j/Logger} log statements in every method of the class
- *  and injects the caller-information with {@code org/slf4j/MDC#put()} calls before every log statement
+ * and injects the caller-information with {@code org/slf4j/MDC#put()} calls before every log statement
  */
 public class AddCallerInfoToLogsAdapter extends ClassVisitor {
-    /** Fully qualified name of {@code org.slf4j.Logger} */
+    /**
+     * Fully qualified name of {@code org.slf4j.Logger}
+     */
     public static final String SLF4J_LOGGER_FQN = "org/slf4j/Logger";
-    /** Fully qualified name of {@code org.slf4j.MDC} */
+    /**
+     * Fully qualified name of {@code org.slf4j.MDC}
+     */
     public static final String SLF4J_MDC_FQN = "org/slf4j/MDC";
-    /** Method name of {@code org.slf4j.MDC#put(String, String)} */
+    /**
+     * Method name of {@code org.slf4j.MDC#put(String, String)}
+     */
     public static final String SLF4J_MDC_PUT_METHOD_NAME = "put";
-    /** Parameters descriptor of {@code org.slf4j.MDC#put(String, String)} */
+    /**
+     * Parameters descriptor of {@code org.slf4j.MDC#put(String, String)}
+     */
     public static final String SLF4J_MDC_PUT_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;)V";
-    /** Method name of {@code org.slf4j.MDC#remove(String)} */
+    /**
+     * Method name of {@code org.slf4j.MDC#remove(String)}
+     */
     public static final String SLF4J_MDC_REMOVE_METHOD_NAME = "remove";
-    /** Parameters descriptor of {@code org.slf4j.MDC#remove(String)} */
+    /**
+     * Parameters descriptor of {@code org.slf4j.MDC#remove(String)}
+     */
     public static final String SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR = "(Ljava/lang/String;)V";
 
-    private final String methodMdcParameter;
-    private final String lineMdcParameter;
+    public static final String CONVERSION_CLASS = "%class";
+    public static final String CONVERSION_METHOD = "%method";
+    public static final String CONVERSION_LINE = "%line";
 
-    private final boolean injectMethod;
-    private final boolean injectLineNumber;
+    public static final String[] CONVERSIONS = new String[]{CONVERSION_CLASS, CONVERSION_METHOD, CONVERSION_LINE};
+
+    private final String classFileName;
+    private final String injectionMdcParameter;
+    private final String injection;
+
 
     /**
      * Keeping track of how many log statements have been found in the class for logging purposes
      */
     private int logStatementsCounter = 0;
 
-    public AddCallerInfoToLogsAdapter(ClassVisitor cv, String methodMdcParameter, String lineMdcParameter, boolean injectMethod, boolean injectLineNumber) {
+    public AddCallerInfoToLogsAdapter(ClassVisitor cv, File classFile, String injectionMdcParameter, String injection) {
         super(ASM7, cv);
-        this.methodMdcParameter = methodMdcParameter;
-        this.lineMdcParameter = lineMdcParameter;
-        this.injectMethod = injectMethod;
-        this.injectLineNumber = injectLineNumber;
+        this.classFileName = classFile.getName();
+        this.injectionMdcParameter = injectionMdcParameter;
+        this.injection = injection;
         this.cv = cv;
     }
 
@@ -90,21 +107,19 @@ public class AddCallerInfoToLogsAdapter extends ClassVisitor {
             boolean isSlf4jLogStatement = Objects.equals(owner, SLF4J_LOGGER_FQN) && name.matches("info|warn|error|debug|trace");
             if (isSlf4jLogStatement) {
                 logStatementsCounter++;
-            }
-            if (injectMethod && isSlf4jLogStatement) {
-                super.visitLdcInsn(methodMdcParameter);
-                super.visitLdcInsn(this.getName());
-                super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_PUT_METHOD_NAME, SLF4J_MDC_PUT_METHOD_DESCRIPTOR, false);
-                super.visitLdcInsn(lineMdcParameter);
-                super.visitLdcInsn(currentLineNumber.toString());
+                super.visitLdcInsn(injectionMdcParameter);
+                super.visitLdcInsn(injection
+                        .replace(CONVERSION_CLASS, classFileName)
+                        .replace(CONVERSION_METHOD, this.getName())
+                        .replace(CONVERSION_LINE, String.valueOf(currentLineNumber))
+                );
                 super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_PUT_METHOD_NAME, SLF4J_MDC_PUT_METHOD_DESCRIPTOR, false);
             }
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-            if (injectLineNumber && isSlf4jLogStatement) {
-                super.visitLdcInsn(methodMdcParameter);
+            if (isSlf4jLogStatement) {
+                super.visitLdcInsn(injectionMdcParameter);
                 super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_REMOVE_METHOD_NAME, SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR, false);
-                super.visitLdcInsn(lineMdcParameter);
-                super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_REMOVE_METHOD_NAME, SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR, false);
+
             }
         }
     }
