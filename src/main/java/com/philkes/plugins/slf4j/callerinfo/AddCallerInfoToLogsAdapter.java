@@ -15,13 +15,18 @@ import static org.objectweb.asm.Opcodes.*;
  *  and injects the caller-information with {@code org/slf4j/MDC#put()} calls before every log statement
  */
 public class AddCallerInfoToLogsAdapter extends ClassVisitor {
-
-    public static final String SLF4J_MDC_FQN = "org/slf4j/MDC";
-    public static final String SLF4J_MDC_PUT_METHOD_NAME = "put";
-    public static final String SLF4J_MDC_REMOVE_METHOD_NAME = "remove";
-    public static final String SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR = "(Ljava/lang/String;)V";
-    public static final String SLF4J_MDC_PUT_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;)V";
+    /** Fully qualified name of {@code org.slf4j.Logger} */
     public static final String SLF4J_LOGGER_FQN = "org/slf4j/Logger";
+    /** Fully qualified name of {@code org.slf4j.MDC} */
+    public static final String SLF4J_MDC_FQN = "org/slf4j/MDC";
+    /** Method name of {@code org.slf4j.MDC#put(String, String)} */
+    public static final String SLF4J_MDC_PUT_METHOD_NAME = "put";
+    /** Parameters descriptor of {@code org.slf4j.MDC#put(String, String)} */
+    public static final String SLF4J_MDC_PUT_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;)V";
+    /** Method name of {@code org.slf4j.MDC#remove(String)} */
+    public static final String SLF4J_MDC_REMOVE_METHOD_NAME = "remove";
+    /** Parameters descriptor of {@code org.slf4j.MDC#remove(String)} */
+    public static final String SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR = "(Ljava/lang/String;)V";
 
     private final String methodMdcParameter;
     private final String lineMdcParameter;
@@ -32,7 +37,7 @@ public class AddCallerInfoToLogsAdapter extends ClassVisitor {
     /**
      * Keeping track of how many log statements have been found in the class for logging purposes
      */
-    private int counter = 0;
+    private int logStatementsCounter = 0;
 
     public AddCallerInfoToLogsAdapter(ClassVisitor cv, String methodMdcParameter, String lineMdcParameter, boolean injectMethod, boolean injectLineNumber) {
         super(ASM7, cv);
@@ -84,7 +89,7 @@ public class AddCallerInfoToLogsAdapter extends ClassVisitor {
         public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
             boolean isSlf4jLogStatement = Objects.equals(owner, SLF4J_LOGGER_FQN) && name.matches("info|warn|error|debug|trace");
             if (isSlf4jLogStatement) {
-                counter++;
+                logStatementsCounter++;
             }
             if (injectMethod && isSlf4jLogStatement) {
                 super.visitLdcInsn(methodMdcParameter);
@@ -104,7 +109,7 @@ public class AddCallerInfoToLogsAdapter extends ClassVisitor {
         }
     }
 
-    public int getCounter() {
-        return counter;
+    public int getLogStatementsCounter() {
+        return logStatementsCounter;
     }
 }

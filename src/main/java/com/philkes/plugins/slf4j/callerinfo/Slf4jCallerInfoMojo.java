@@ -32,7 +32,7 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
     @Parameter(defaultValue = "callerLine")
     String lineMdcParameter;
 
-    @Parameter(defaultValue = "${project.build.directory}", readonly = true)
+    @Parameter(defaultValue = "${project.build.outputDirectory}")
     File target;
 
     @Parameter(defaultValue = ".*")

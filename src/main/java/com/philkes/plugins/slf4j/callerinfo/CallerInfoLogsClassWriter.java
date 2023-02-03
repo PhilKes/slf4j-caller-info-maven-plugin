@@ -32,7 +32,7 @@ public class CallerInfoLogsClassWriter {
     private final Log log;
 
     public CallerInfoLogsClassWriter(File target, String filterClasses, String methodMdcParameter, String lineMdcParameter, boolean injectMethod, boolean injectLineNumber, Log log) throws IOException {
-        this.targetClassDir = new File(target.toPath() + "/classes/");
+        this.targetClassDir = target;
         this.filterClasses = filterClasses;
         this.injectMethod = injectMethod;
         this.injectLineNumber = injectLineNumber;
@@ -41,6 +41,11 @@ public class CallerInfoLogsClassWriter {
         this.log = log;
     }
 
+    /**
+     * Uses {@link AddCallerInfoToLogsAdapter} to inject caller-information via MDC to given class
+     * @param classFile .class File in target directory
+     * @throws IOException if {@code classFile} is not a valid .class File
+     */
     private byte[] addCallerInfoToLogs(File classFile) throws IOException {
         log.debug(String.format("Searching for log statements in %s", classFile.toPath()));
         ClassReader reader = new ClassReader(new FileInputStream((classFile)));
@@ -48,19 +53,23 @@ public class CallerInfoLogsClassWriter {
         AddCallerInfoToLogsAdapter callerInfoLogAdapter = new AddCallerInfoToLogsAdapter(writer, methodMdcParameter, lineMdcParameter,
                 injectMethod, injectLineNumber);
         reader.accept(callerInfoLogAdapter, ClassReader.EXPAND_FRAMES);
-        int logStatementsFound = callerInfoLogAdapter.getCounter();
+        int logStatementsFound = callerInfoLogAdapter.getLogStatementsCounter();
         if (logStatementsFound > 0) {
             log.info(String.format("%s - %d SLF4J log statements found", classFile.toPath(), logStatementsFound));
         }
         return writer.toByteArray();
     }
 
+    /**
+     * Loops through {@link #targetClassDir} directory recursively with the given {@link #filterClasses} filter and
+     *  writes the injected class files back to the target directory
+     * @throws IOException if {@link #targetClassDir} contains invalid {@code .class} files
+     */
     public void execute() throws IOException {
         log.info(String.format("Searching for %s usages in all .class files in %s with filterClasses='%s'", SLF4J_LOGGER_FQN, targetClassDir.toPath(), filterClasses));
         if (!targetClassDir.isDirectory()) {
             throw new IllegalArgumentException(String.format("Path %s is not a valid target/classes directory!", targetClassDir.toPath()));
         }
-
         Collection<File> files = FileUtils.listFiles(targetClassDir,
                 new AbstractFileFilter() {
                     @Override
