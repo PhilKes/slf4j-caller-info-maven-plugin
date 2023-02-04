@@ -1,14 +1,21 @@
-# slfj4-caller-info-maven-plugin
-Maven plugin to inject caller-information (Method name + Source code line number) to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (info, warn, error, debug, trace).
+# slf4j-caller-info-maven-plugin
+Maven plugin to **inject caller-location-information** to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (info, warn, error, debug, trace) in your compiled code.
 
 
 ## Description
-The caller-information injection is done with `MDC.put(...)` calls before every SLF4J log invocation, putting the method name and source code line number hardcoded into the compiled `.class` files. This allows to conveniently print out where exactly in the code the log statement originates from for every single log statement, without any overhead or performance loss, by simply adding the Mapped Diagnostic Context ([MDC](https://logback.qos.ch/manual/mdc.html)) parameters `callerMethod` and `callerLine` to your logging-pattern configuration. It can therefore be used with any SLF4J implementation, such as `logback`, `log4j2`, etc.
+The caller-location-information injection is done with a [MDC.put(...)](https://www.slf4j.org/api/org/slf4j/MDC.html#put-java.lang.String-java.lang.String-) call before every SLF4J log invocation, putting the class name, line number (optionally also method name) into the MDC in the compiled `.class` files. This allows to conveniently **print out where exactly in the code the log statement originates from** for every single log statement, without any overhead or performance loss, by simply adding the **Mapped Diagnostic Context** ([MDC](https://logback.qos.ch/manual/mdc.html)) parameter `callerInformation` to your logging-pattern configuration. It can therefore be used with any SLF4J implementation, such as [logback](https://logback.qos.ch/), [log4j2](https://logging.apache.org/log4j/2.x/), etc.
 
-Since this plugin executes before runtime, there is no performance loss to calculate the current method + line number like when using the [%method](https://logback.qos.ch/manual/layouts.html#method) or [%line](https://logback.qos.ch/manual/layouts.html#line) parameter in your logging pattern, that looks for the caller-information on the stacktrace during runtime.
+Since this plugin adds the code before runtime, there is **nearly no performance loss** to calculate the caller-location-information in comparison to using e.g. the `%class` or `%line` pattern parameters (see [Log4j2 manual](https://logging.apache.org/log4j/2.x/manual/layouts.html#Patterns) or [Logback manual](https://logback.qos.ch/manual/layouts.html#class) in your logging pattern, that looks for the caller-information on the stacktrace during runtime which is very costly.
 
-## Performance
-### TODO: Add basic performance diagram
+## Performance at runtime
+
+<img src="./benchmark/results/results.png" width="500">
+
+As you can see using the `slf4j-caller-info-maven-plugin` (orange bars) printing the caller location is about **4x faster** than using Log4j2's or Logback's caller-location built-in pattern (red bars). In total there is a speed loss of only ~9% for Log4j2 and ~8% for Logback in comparison to not logging the caller-location at all (blue bars).
+
+System specs for the benchmarks:
+JDK 17 on Linux Mint 20.3 with 8 cores CPU AMD Ryzen 2700X@3.7Ghz
+
 The benchmarking was done with [JMH](https://github.com/openjdk/jmh) based on log4j's [log4j-perf](https://github.com/apache/logging-log4j2) module.
 For more details about the benchmarks see the [benchmark README.md](./benchmark/README.md).
 
@@ -42,18 +49,30 @@ mvn slf4j-caller-info:inject
 There are several parameters you can overwrite:
 ```xml
 <configuration>
-<!-- All parameters are optional, the shown default values are used if they are defined here --> 
-    <methodMdcParameter>callerMethod</methodMdcParameter>
-    <lineMdcParameter>callerLine</lineMdcParameter>
-    <!-- Whether or not to inject method and/or source code line number -->
-    <injectMethod>true</injectMethod>
-    <injectLineNumber>true</injectLineNumber>
+<!-- All parameters are optional, the shown default values are used if they are not overwritten in your pom.xml --> 
+    <!-- Injection format which can include conversion words: class,line,method -->
+    <injection>%class:%line</injection>
+    <!-- MDC parameter name for the injection, this parameter has to be present in your logging.pattern ('%X{callerInformation}') -->
+    <injectionMdcParameter>callerInformation</injectionMdcParameter>
     <!-- Regex for specifying which packages/classfiles should be injected into -->
     <filterClasses>.*</filterClasses>
+    <!-- Specify log levels to be injected to -->
+    <levels>TRACE,DEBUG,INFO,WARN,ERROR</levels>
 </configuration>
 ```
 
 ## Example
+See [logback.xml](./src/test/resources/logback.xml):
+```xml
+...
+<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+        <!-- Example log pattern including 'callerInformation' MDC parameter -->
+        <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} [%X{callerInformation}] - %msg%n</pattern>
+    </encoder>
+</appender>
+...
+```
 See [LoggingTest.java](./src/test/java/com/philkes/plugins/slf4j/callerinfo/LoggingTest.java):
 ```java
 1   package com.philkes.plugins.slf4j.callerinfo;
@@ -79,6 +98,7 @@ See [LoggingTest.java](./src/test/java/com/philkes/plugins/slf4j/callerinfo/Logg
 
 Compiled `.class` after `slf4j-caller-info:inject`:
 ```java
+// import ...
 public class LoggingTest {
     private final Logger log = LoggerFactory.getLogger(LoggingTest.class);
 
@@ -87,53 +107,41 @@ public class LoggingTest {
 
     public void log(String msg) {
         Logger var10000 = this.log;
-        MDC.put("callerMethod", "log");
-        MDC.put("callerLine", "13");
+        MDC.put("callerInformation", "LoggingTest.class:13");
         var10000.info(msg);
-        MDC.remove("callerMethod");
-        MDC.remove("callerLine");
+        MDC.remove("callerInformation");
         var10000 = this.log;
-        MDC.put("callerMethod", "log");
-        MDC.put("callerLine", "14");
+        MDC.put("callerInformation", "LoggingTest.class:14");
         var10000.warn(msg);
-        MDC.remove("callerMethod");
-        MDC.remove("callerLine");
+        MDC.remove("callerInformation");
         var10000 = this.log;
-        MDC.put("callerMethod", "log");
-        MDC.put("callerLine", "15");
+        MDC.put("callerInformation", "LoggingTest.class:15");
         var10000.error(msg);
-        MDC.remove("callerMethod");
-        MDC.remove("callerLine");
+        MDC.remove("callerInformation");
         var10000 = this.log;
-        MDC.put("callerMethod", "log");
-        MDC.put("callerLine", "16");
+        MDC.put("callerInformation", "LoggingTest.class:16");
         var10000.debug(msg);
-        MDC.remove("callerMethod");
-        MDC.remove("callerLine");
+        MDC.remove("callerInformation");
         var10000 = this.log;
-        MDC.put("callerMethod", "log");
-        MDC.put("callerLine", "17");
+        MDC.put("callerInformation", "LoggingTest.class:17");
         var10000.trace(msg);
-        MDC.remove("callerMethod");
-        MDC.remove("callerLine");
+        MDC.remove("callerInformation");
     }
 }
 ```
-mvn archetype:generate \
--DinteractiveMode=false \
--DarchetypeGroupId=org.openjdk.jmh \
--DarchetypeArtifactId=jmh-java-benchmark-archetype \
--DgroupId=com.philkes.plugins \
--DartifactId=slf4j-caller-info-maven-plugin-benchmark \
--Dversion=1.0
+Log Output:
+```log
+18:29:52.486 INFO  c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.class:13] - This is a test message
+18:29:52.487 WARN  c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.class:14] - This is a test message
+18:29:52.487 ERROR c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.class:15] - This is a test message
+18:29:52.487 DEBUG c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.class:16] - This is a test message
+18:29:52.487 TRACE c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.class:17] - This is a test message
+```
 ## Dependencies
 - [ASM](https://asm.ow2.io/) for Java bytecode manipulation
 - [Apache Commons IO](https://commons.apache.org/proper/commons-io/) for FileUtils
 - Built with Java 17
+- [JMH](https://github.com/openjdk/jmh) for benchmarks
 
-
-# TODOs 
-- Runtime speed comparison to [Logging Pattern Caller Information](https://logging.apache.org/log4j/2.x/performance.html)
-- Configuration parameter to modify on which log levels the injections should be performed
 
 This project is licensed under the terms of the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.txt).

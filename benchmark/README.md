@@ -6,9 +6,11 @@ to using the caller location information in your logging pattern. The benchmarks
 
 ## Results
 
+<img src="./results/results.png" width="500">
+
 We can see a massive performance gain in comparison to using logback/log4j2 caller location pattern. Logging the caller location
- with this plugin speeds asynchronous logging by XXx (logback) and XXx (log4j2) respectively. The actual slow down of logging
- the caller location with plugin in comparison to not logging the caller is only 0.XXx(logback) and 0.XXx(log4j2).
+ with this plugin speeds asynchronous logging by ~4 times. The actual slow down of logging
+ the caller location with this plugin in comparison to not logging the caller at all is only ~8% (logback) and ~9% (log4j2).
 For more detailed JMH results analysis, you can view the `.json` result files (see `results/`) online with the [JMH Visualizer](https://jmh.morethan.io/).  
 
 ## Usage
