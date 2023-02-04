@@ -6,11 +6,13 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.slf4j.event.Level;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
-import static com.philkes.plugins.slf4j.callerinfo.AddCallerInfoToLogsAdapter.*;
+import static com.philkes.plugins.slf4j.callerinfo.AddCallerInfoToLogsVisitor.CONVERSIONS;
 
 /**
  * Mojo to scan the code for SLF4J Log statements and inject caller-information
@@ -31,6 +33,10 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
     @Parameter(defaultValue = ".*")
     String filterClasses;
 
+    @Parameter
+    Set<Level> levels = Set.of(Level.values());
+
+
     public void execute() throws MojoExecutionException {
         Log log = getLog();
         if (injection.isEmpty()) {
@@ -49,7 +55,7 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
         }
         log.info(String.format("Make sure to add the MDC parameter '%s' to your logging pattern, otherwise they wont be printed in your logs", injectionMdcParameter));
         try {
-            new CallerInfoLogsClassWriter(target, filterClasses, injectionMdcParameter, injection, log)
+            new CallerInfoLogsClassWriter(target, filterClasses, levels, injectionMdcParameter, injection, log)
                     .execute();
         } catch (IOException e) {
             throw new RuntimeException(e);

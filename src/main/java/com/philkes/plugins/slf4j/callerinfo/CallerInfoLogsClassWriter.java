@@ -5,6 +5,7 @@ import org.apache.commons.io.filefilter.*;
 import org.apache.maven.plugin.logging.Log;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.slf4j.event.Level;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,8 +13,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
+import java.util.Set;
 
-import static com.philkes.plugins.slf4j.callerinfo.AddCallerInfoToLogsAdapter.SLF4J_LOGGER_FQN;
+import static com.philkes.plugins.slf4j.callerinfo.AddCallerInfoToLogsVisitor.SLF4J_LOGGER_FQN;
 
 /**
  * Utilizing ASM {@link ClassReader} and {@link ClassWriter} to modify the compiled Java classes
@@ -23,22 +25,24 @@ public class CallerInfoLogsClassWriter {
 
     private final File targetClassDir;
     private final String filterClasses;
+    private final Set<Level> levels;
 
     private final String injectionMdcParameter;
     private final String injection;
 
     private final Log log;
 
-    public CallerInfoLogsClassWriter(File target, String filterClasses, String injectionMdcParameter, String injection, Log log) throws IOException {
+    public CallerInfoLogsClassWriter(File target, String filterClasses, Set<Level> levels, String injectionMdcParameter, String injection, Log log) throws IOException {
         this.targetClassDir = target;
         this.filterClasses = filterClasses;
+        this.levels = levels;
         this.injectionMdcParameter = injectionMdcParameter;
         this.injection = injection;
         this.log = log;
     }
 
     /**
-     * Uses {@link AddCallerInfoToLogsAdapter} to inject caller-information via MDC to given class
+     * Uses {@link AddCallerInfoToLogsVisitor} to inject caller-information via MDC to given class
      *
      * @param classFile .class File in target directory
      * @throws IOException if {@code classFile} is not a valid .class File
@@ -47,7 +51,8 @@ public class CallerInfoLogsClassWriter {
         log.debug(String.format("Searching for log statements in %s", classFile.toPath()));
         ClassReader reader = new ClassReader(new FileInputStream((classFile)));
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-        AddCallerInfoToLogsAdapter callerInfoLogAdapter = new AddCallerInfoToLogsAdapter(writer, classFile, injectionMdcParameter, injection);
+        AddCallerInfoToLogsVisitor callerInfoLogAdapter = new AddCallerInfoToLogsVisitor(writer, classFile, levels,
+                injectionMdcParameter, injection);
         reader.accept(callerInfoLogAdapter, ClassReader.EXPAND_FRAMES);
         int logStatementsFound = callerInfoLogAdapter.getLogStatementsCounter();
         if (logStatementsFound > 0) {
