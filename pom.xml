@@ -33,9 +33,11 @@
 
     <scm>
         <connection>scm:git:git@github.com:PhilKes/slf4j-caller-info-maven-plugin.git</connection>
-        <developerConnection>scm:git:shh://github.com:PhilKes/slf4j-caller-info-maven-plugin.git</developerConnection>
+        <developerConnection>scm:git:git@github.com:PhilKes/slf4j-caller-info-maven-plugin.git</developerConnection>
         <url>https://github.com/PhilKes/slf4j-caller-info-maven-plugin</url>
     </scm>
+
+
 
     <dependencies>
         <dependency>
@@ -177,6 +179,11 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.0.0-M7</version>
             </plugin>
         </plugins>
     </build>
