@@ -29,15 +29,18 @@ public class CallerInfoLogsClassWriter {
 
     private final String injectionMdcParameter;
     private final String injection;
+    private final Boolean includePackageName;
 
     private final Log log;
 
-    public CallerInfoLogsClassWriter(File target, String filterClasses, Set<Level> levels, String injectionMdcParameter, String injection, Log log) throws IOException {
+    public CallerInfoLogsClassWriter(File target, String filterClasses, Set<Level> levels, String injectionMdcParameter,
+                                     String injection, Boolean includePackageName, Log log) throws IOException {
         this.targetClassDir = target;
         this.filterClasses = filterClasses;
         this.levels = levels;
         this.injectionMdcParameter = injectionMdcParameter;
         this.injection = injection;
+        this.includePackageName = includePackageName;
         this.log = log;
     }
 
@@ -51,8 +54,8 @@ public class CallerInfoLogsClassWriter {
         log.debug(String.format("Searching for log statements in %s", classFile.toPath()));
         ClassReader reader = new ClassReader(new FileInputStream((classFile)));
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-        AddCallerInfoToLogsVisitor callerInfoLogAdapter = new AddCallerInfoToLogsVisitor(writer, classFile, levels,
-                injectionMdcParameter, injection);
+        AddCallerInfoToLogsVisitor callerInfoLogAdapter = new AddCallerInfoToLogsVisitor(writer, reader.getClassName(), levels,
+                injectionMdcParameter, injection, includePackageName);
         reader.accept(callerInfoLogAdapter, ClassReader.EXPAND_FRAMES);
         int logStatementsFound = callerInfoLogAdapter.getLogStatementsCounter();
         if (logStatementsFound > 0) {
@@ -68,8 +71,8 @@ public class CallerInfoLogsClassWriter {
      * @throws IOException if {@link #targetClassDir} contains invalid {@code .class} files
      */
     public void execute() throws IOException {
-        log.info(String.format("Searching for %s usages in all .class files in %s with filterClasses='%s', injection='%s'",
-                SLF4J_LOGGER_FQN, targetClassDir.toPath(), filterClasses, injection));
+        log.info(String.format("Searching for %s usages in all .class files in %s with filterClasses='%s', injection='%s', includePackageName='%s'",
+                SLF4J_LOGGER_FQN, targetClassDir.toPath(), filterClasses, injection, String.valueOf(includePackageName)));
         if (!targetClassDir.isDirectory()) {
             throw new IllegalArgumentException(String.format("Path %s is not a valid target/classes directory!", targetClassDir.toPath()));
         }

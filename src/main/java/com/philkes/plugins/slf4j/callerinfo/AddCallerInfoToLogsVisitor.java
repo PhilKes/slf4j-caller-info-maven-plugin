@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.MDC;
 import org.slf4j.event.Level;
 
-import java.io.File;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,26 +51,27 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
 
     public static final Set<String> CONVERSIONS = Set.of(CONVERSION_CLASS, CONVERSION_METHOD, CONVERSION_LINE);
 
-    private final String classFileName;
+    private final String className;
     private final Set<Level> levels;
     private final String injectionMdcParameter;
     private final String injection;
+    private final Boolean includePackageName;
 
     /**
      * Keeping track of how many log statements have been found in the class for logging purposes
      */
     private int logStatementsCounter = 0;
 
-    public AddCallerInfoToLogsVisitor(ClassVisitor cv, File classFile, Set<Level> levels,
-                                      String injectionMdcParameter, String injection) {
+    public AddCallerInfoToLogsVisitor(ClassVisitor cv, String className, Set<Level> levels,
+                                      String injectionMdcParameter, String injection, Boolean includePackageName) {
         super(ASM7, cv);
-        this.classFileName = classFile.getName();
+        this.className = className;
         this.levels = levels;
         this.injectionMdcParameter = injectionMdcParameter;
         this.injection = injection;
+        this.includePackageName = includePackageName;
         this.cv = cv;
     }
-
 
     @Override
     public MethodVisitor visitMethod(int access,
@@ -118,7 +118,7 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
                 logStatementsCounter++;
                 super.visitLdcInsn(injectionMdcParameter);
                 super.visitLdcInsn(injection
-                        .replace(CONVERSION_CLASS, classFileName)
+                        .replace(CONVERSION_CLASS, (includePackageName ? className : withoutPackageName(className)) + ".java")
                         .replace(CONVERSION_METHOD, this.getName())
                         .replace(CONVERSION_LINE, String.valueOf(currentLineNumber))
                 );
@@ -131,6 +131,10 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
 
             }
         }
+    }
+
+    private static String withoutPackageName(String className) {
+        return className.substring(className.lastIndexOf("/") + 1);
     }
 
     public int getLogStatementsCounter() {

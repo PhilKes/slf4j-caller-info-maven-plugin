@@ -62,7 +62,7 @@ There are several parameters you can overwrite:
 ```
 
 ## Example
-See [logback.xml](./src/test/resources/logback.xml):
+See [logback.xml](plugin/src/test/resources/logback.xml):
 ```xml
 ...
 <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -73,7 +73,7 @@ See [logback.xml](./src/test/resources/logback.xml):
 </appender>
 ...
 ```
-See [LoggingTest.java](./src/test/java/com/philkes/plugins/slf4j/callerinfo/LoggingTest.java):
+See [LoggingTest.java](plugin/src/test/java/com/philkes/plugins/slf4j/callerinfo/LoggingTest.java):
 ```java
 1   package com.philkes.plugins.slf4j.callerinfo;
 2
@@ -137,6 +137,7 @@ Log Output:
 18:29:52.487 DEBUG c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.class:16] - This is a test message
 18:29:52.487 TRACE c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.class:17] - This is a test message
 ```
+
 ## Dependencies
 - [ASM](https://asm.ow2.io/) for Java bytecode manipulation
 - [Apache Commons IO](https://commons.apache.org/proper/commons-io/) for FileUtils

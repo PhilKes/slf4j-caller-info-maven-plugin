@@ -34,7 +34,7 @@ public class Slf4jCallerInfoMojoTest {
         String msg = "This is a test message";
         new LoggingTest().log(msg);
         int infoLogLineNumber = 13; // see LoggingTest class log.info() call line number
-        String className = "LoggingTest.class";
+        String className = "LoggingTest.java";
         String methodName = "log";
         // Check if all log statements have the correct MDC properties
         for (Level level : new Level[]{Level.INFO, Level.WARN, Level.ERROR, Level.DEBUG, Level.TRACE}) {

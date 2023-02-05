@@ -27,6 +27,9 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
     @Parameter(defaultValue = "callerInformation")
     String injectionMdcParameter;
 
+    @Parameter(defaultValue = "false")
+    boolean includePackageName;
+
     @Parameter(defaultValue = "${project.build.outputDirectory}")
     File target;
 
@@ -55,7 +58,7 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
         }
         log.info(String.format("Make sure to add the MDC parameter '%s' to your logging pattern, otherwise they wont be printed in your logs", injectionMdcParameter));
         try {
-            new CallerInfoLogsClassWriter(target, filterClasses, levels, injectionMdcParameter, injection, log)
+            new CallerInfoLogsClassWriter(target, filterClasses, levels, injectionMdcParameter, injection, includePackageName, log)
                     .execute();
         } catch (IOException e) {
             throw new RuntimeException(e);
