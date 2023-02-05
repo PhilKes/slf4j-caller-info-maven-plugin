@@ -32,9 +32,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com:PhilKes/slfj4-caller-info-maven-plugin.git</connection>
-        <developerConnection>scm:git:shh://github.com:PhilKes/slfj4-caller-info-maven-plugin.git</developerConnection>
-        <url>https://github.com/PhilKes/slfj4-caller-info-maven-plugin</url>
+        <connection>scm:git:git@github.com:PhilKes/slf4j-caller-info-maven-plugin.git</connection>
+        <developerConnection>scm:git:shh://github.com:PhilKes/slf4j-caller-info-maven-plugin.git</developerConnection>
+        <url>https://github.com/PhilKes/slf4j-caller-info-maven-plugin</url>
     </scm>
 
     <dependencies>
@@ -79,9 +79,8 @@
             <artifactId>slf4j-ext</artifactId>
             <version>1.7.32</version>
         </dependency>
-
-
     </dependencies>
+
     <build>
         <pluginManagement>
             <plugins>
@@ -214,6 +213,17 @@
             </build>
         </profile>
     </profiles>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+    </distributionManagement>
 
     <reporting>
         <plugins>
