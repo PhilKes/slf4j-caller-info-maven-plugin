@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.MDC;
 import org.slf4j.event.Level;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,7 +51,7 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
     public static final String CONVERSION_METHOD = "%method";
     public static final String CONVERSION_LINE = "%line";
 
-    public static final Set<String> CONVERSIONS = Set.of(CONVERSION_CLASS, CONVERSION_METHOD, CONVERSION_LINE);
+    public static final Set<String> CONVERSIONS = new HashSet<>(Arrays.asList(CONVERSION_CLASS, CONVERSION_METHOD, CONVERSION_LINE));
 
     private final String className;
     private final Set<Level> levels;

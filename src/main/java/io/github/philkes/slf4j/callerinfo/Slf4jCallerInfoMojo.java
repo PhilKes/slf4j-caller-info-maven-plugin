@@ -10,7 +10,7 @@ import org.slf4j.event.Level;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Mojo to scan the code for SLF4J Log statements and inject caller-information
@@ -53,7 +53,7 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
      * Set of SLF4J log Levels to which should be injected to
      */
     @Parameter
-    Set<Level> levels = Set.of(Level.values());
+    Set<Level> levels = new HashSet<>(Arrays.asList(Level.values()));
 
 
     public void execute() throws MojoExecutionException {
