@@ -1,4 +1,4 @@
-target/
+**/target/
 pom.xml.tag
 pom.xml.releaseBackup
 plugin/pom.xml.versionsBackup
@@ -12,3 +12,4 @@ buildNumber.properties
 /.idea/
 *.iml
 *.log
+*.versionsBackup

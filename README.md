@@ -25,7 +25,7 @@ Add the plugin to your `pom.xml`:
 <build>
     <plugins>
         <plugin>
-            <groupId>com.philkes.plugins</groupId>
+            <groupId>io.github.philkes</groupId>
             <artifactId>slf4j-caller-info-maven-plugin</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <executions>
@@ -77,9 +77,9 @@ See [logback.xml](plugin/src/test/resources/logback.xml):
 </appender>
 ...
 ```
-See [LoggingTest.java](plugin/src/test/java/com/philkes/plugins/slf4j/callerinfo/LoggingTest.java):
+See [LoggingTest.java](plugin/src/test/java/io/github/philkes/slf4j/callerinfo/LoggingTest.java):
 ```java
-1   package com.philkes.plugins.slf4j.callerinfo;
+1   package io.github.philkes.slf4j.callerinfo;
 2
 3   import org.slf4j.Logger;
 4   import org.slf4j.LoggerFactory;
