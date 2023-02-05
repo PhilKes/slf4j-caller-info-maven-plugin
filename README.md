@@ -1,5 +1,5 @@
 # slf4j-caller-info-maven-plugin
-Maven plugin to **inject caller-location-information** to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (info, warn, error, debug, trace) in your compiled code.
+Maven plugin to **inject caller-location-information** to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (`info()`, etc.) in your compiled code.
 
 
 ## Description
@@ -58,6 +58,10 @@ There are several parameters you can overwrite:
     <filterClasses>.*</filterClasses>
     <!-- Specify log levels to be injected to -->
     <levels>TRACE,DEBUG,INFO,WARN,ERROR</levels>
+    <!-- Whether or not to print the package-name of the class, if '%class' is present in 'injection' parameter -->
+    <includePackageName>false</includePackageName>
+    <!-- Target directory which contains the compiled '.class' files -->
+    <target>${project.build.outputDirectory}</target>
 </configuration>
 ```
 
