@@ -1,8 +1,8 @@
 name: Deploy to Maven Central
 
 on:
-  push:
-    branches: [ main ]
+  release:
+    types: [released]
 
 jobs:
   build:
