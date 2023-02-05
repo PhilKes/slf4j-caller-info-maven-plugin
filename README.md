@@ -27,7 +27,7 @@ Add the plugin to your `pom.xml`:
         <plugin>
             <groupId>io.github.philkes</groupId>
             <artifactId>slf4j-caller-info-maven-plugin</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
             <executions>
                 <execution>
                     <goals>
