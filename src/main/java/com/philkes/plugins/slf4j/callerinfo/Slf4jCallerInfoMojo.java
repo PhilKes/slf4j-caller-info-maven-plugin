@@ -21,21 +21,39 @@ import static com.philkes.plugins.slf4j.callerinfo.AddCallerInfoToLogsVisitor.CO
 @Mojo(name = "inject", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
 public class Slf4jCallerInfoMojo extends AbstractMojo {
 
+    /**
+     * Injected pattern, can include any conversion words ('%class','%line','%method')
+     */
     @Parameter(defaultValue = "%class:%line")
     String injection;
 
+    /**
+     * Name of the used MDC parameter in the logging-pattern
+     */
     @Parameter(defaultValue = "callerInformation")
     String injectionMdcParameter;
 
+    /**
+     * Whether or not to print the package-name of the class, if '%class' is present in 'injection' parameter
+     */
     @Parameter(defaultValue = "false")
     boolean includePackageName;
 
+    /**
+     * Target directory which contains the compiled '.class' files, defaults to project class target dir ('target/classes')
+     */
     @Parameter(defaultValue = "${project.build.outputDirectory}")
     File target;
 
+    /**
+     * Regex filter to only inject into specific Java classes
+     */
     @Parameter(defaultValue = ".*")
     String filterClasses;
 
+    /**
+     * Set of SLF4J log Levels to which should be injected to
+     */
     @Parameter
     Set<Level> levels = Set.of(Level.values());
 
