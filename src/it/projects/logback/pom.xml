@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.philkes</groupId>
     <artifactId>slf4j-caller-info-maven-plugin-test</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -30,7 +30,7 @@
             <plugin>
                 <groupId>io.github.philkes</groupId>
                 <artifactId>slf4j-caller-info-maven-plugin</artifactId>
-                <version>1.0.0</version>
+                <version>1.0.1-SNAPSHOT</version>
                 <executions>
                     <execution>
                         <goals>
