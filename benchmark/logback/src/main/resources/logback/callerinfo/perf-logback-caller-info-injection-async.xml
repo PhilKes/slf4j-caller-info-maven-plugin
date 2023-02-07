@@ -33,12 +33,12 @@
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
       <!-- Example log pattern including 'callerInformation' MDC parameters for Unit Tests-->
-      <Pattern>%d %p %c{1} [%t] %X{aKey} [%X{callerInformation}] - %m %ex%n</Pattern>
+      <Pattern>%d %p %c{1} [%t] %X{aKey} \(%X{callerInformation}\) - %m %ex%n</Pattern>
     </encoder>
   </appender>
 
   <root level="debug">
     <appender-ref ref="ASYNC" />
-<!--    <appender-ref ref="CONSOLE" />-->
+    <appender-ref ref="CONSOLE" />
   </root>
 </configuration>

@@ -28,7 +28,7 @@
     </Async>
     <Console name="Out">
       <PatternLayout>
-        <Pattern>%d %p %c{1.} [%t] %X{aKey} [%C{0}:%L] - %m %ex%n</Pattern>
+        <Pattern>%d %p %c{1.} [%t] %X{aKey} (%C{0}:%L) - %m %ex%n</Pattern>
       </PatternLayout>
     </Console>
   </Appenders>

@@ -46,7 +46,7 @@ See [logback.xml](./src/it/projects/logback/src/test/resources/logback.xml):
 <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
         <!-- Example log pattern including the needed 'callerInformation' MDC parameter -->
-        <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} [%X{callerInformation}] - %msg%n</pattern>
+        <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} \(%X{callerInformation}\) - %msg%n</pattern>
     </encoder>
 </appender>
 ...
@@ -74,14 +74,11 @@ See [LoggingTest.java](./src/it/projects/logback/src/main/java/io/github/philkes
 19  }
 ```
 
-Log Output of `LoggingTest.log("This is a test message)"`:
-```log
-18:29:52.486 INFO  c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.java:13] - This is a test message
-18:29:52.487 WARN  c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.java:14] - This is a test message
-18:29:52.487 ERROR c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.java:15] - This is a test message
-18:29:52.487 DEBUG c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.java:16] - This is a test message
-18:29:52.487 TRACE c.p.p.slf4j.callerinfo.LoggingTest [LoggingTest.java:17] - This is a test message
-```
+Log Output of `LoggingTest.log("This is a test message")`:
+
+<img src="./doc/log-output.png" width="800" style="border: 1px">
+
+*(Screenshot from IntelliJ, automatically detects class + linenumber as links to jump directly into the source code)*
 
 ## Performance at runtime
 
