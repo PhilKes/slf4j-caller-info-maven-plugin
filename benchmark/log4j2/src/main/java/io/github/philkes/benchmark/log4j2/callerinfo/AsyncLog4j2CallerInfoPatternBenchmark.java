@@ -1,3 +1,4 @@
+/*
 package io.github.philkes.benchmark.log4j2.callerinfo;
 
 import java.io.File;
@@ -95,3 +96,4 @@ public class AsyncLog4j2CallerInfoPatternBenchmark {
 
     }
 }
+*/
