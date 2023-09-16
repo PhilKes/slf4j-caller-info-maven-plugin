@@ -90,6 +90,14 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
          * Keeping track of the last processed {@code LINENUMBER} command in the bytecode
          */
         private Integer currentLineNumber = -1;
+        /**
+         * Keeping track of the first String parameter passed to the current method
+         */
+        private String firstMethodStrArg;
+        /**
+         * Keeping track of the number of String parameters passed to the current method
+         */
+        private int strArgsCounter = 0;
 
         AddCallerInfoToMdcAdapter(MethodVisitor delegate, int access, String name, String desc) {
             super(Opcodes.ASM5, delegate, access, name, desc);
@@ -100,6 +108,21 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
             currentLineNumber = line;
             super.visitLineNumber(line, start);
         }
+
+        @Override
+        public void visitLdcInsn(Object var1) {
+            super.visitLdcInsn(var1);
+            if (var1 != null && var1 instanceof String && (strArgsCounter == 0)) {
+                firstMethodStrArg = (String) var1;
+                strArgsCounter++;
+            }
+        }
+
+        /**
+         * Flag to check if the method call before any Logging calls already contains the {@link MDC#put(String, String)} call
+         * with the {@link AddCallerInfoToLogsVisitor#injectionMdcParameter} as the key.
+         */
+        private boolean isLastMethodCallMDCPut = false;
 
         /**
          * Searches for {@link Logger} calls to specified log levels ({@link #levels}) and adds
@@ -116,7 +139,7 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
             boolean isSlf4jLogOnSpecifiedLevel = Objects.equals(owner, SLF4J_LOGGER_FQN) && name.matches(levels.stream()
                     .map(level -> level.toString().toLowerCase())
                     .collect(Collectors.joining("|")));
-            if (isSlf4jLogOnSpecifiedLevel) {
+            if (isSlf4jLogOnSpecifiedLevel && !isLastMethodCallMDCPut) {
                 logStatementsCounter++;
                 super.visitLdcInsn(injectionMdcParameter);
                 super.visitLdcInsn(injection
@@ -128,10 +151,17 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
             }
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
             if (isSlf4jLogOnSpecifiedLevel) {
-                super.visitLdcInsn(injectionMdcParameter);
-                super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_REMOVE_METHOD_NAME, SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR, false);
-
+                if (!isLastMethodCallMDCPut) {
+                    super.visitLdcInsn(injectionMdcParameter);
+                    super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_REMOVE_METHOD_NAME, SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR, false);
+                } else {
+                    isLastMethodCallMDCPut = false;
+                }
+            } else {
+                isLastMethodCallMDCPut = Objects.equals(owner, SLF4J_MDC_FQN) && name.matches(SLF4J_MDC_PUT_METHOD_NAME)
+                        && (injectionMdcParameter.equals(firstMethodStrArg));
             }
+            strArgsCounter = 0;
         }
     }
 

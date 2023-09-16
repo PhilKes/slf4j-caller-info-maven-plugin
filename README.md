@@ -39,6 +39,8 @@ The plugin is executed in the `process-classes` phase or can be explicitly run w
 mvn slf4j-caller-info:inject
 ```
 
+_Note: The `inject` goal is idempotent_
+
 ## Code Example
 See [logback.xml](./src/it/projects/logback/src/test/resources/logback.xml):
 ```xml
@@ -136,6 +138,11 @@ public class LoggingTest {
 - [Apache Commons IO](https://commons.apache.org/proper/commons-io/) for FileUtils
 - Built with Java 17
 - [JMH](https://github.com/openjdk/jmh) for benchmarks
+
+
+## TODO
+- Analyze compile time
+- Analyze .jar size
 
 
 This project is licensed under the terms of the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.txt).
