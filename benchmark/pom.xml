@@ -42,7 +42,7 @@ THE POSSIBILITY OF SUCH DAMAGE.
     <modules>
         <module>logback</module>
         <module>log4j2</module>
-        <module>log4j2-compiletime</module>
+        <module>compiletime</module>
     </modules>
 
     <properties>

@@ -94,6 +94,16 @@ JDK 17 on Linux Mint 20.3 with 8 cores CPU AMD Ryzen 2700X@3.7Ghz
 The benchmarking was done with [JMH](https://github.com/openjdk/jmh) based on log4j's [log4j-perf](https://github.com/apache/logging-log4j2) module.
 For more details about the benchmarks see the [benchmark](./benchmark/) module.
 
+
+### Performance at compiletime
+As for the time it takes the `inject` goal to execute, the compilation time of the plugin is evaluated by generating Java projects with n classes, that all contain 5 SLF4J log-statements and running the plugin on these projects and averaging the plugin's execution time.
+
+<img src="./benchmark/results/results-compiletime.png" width="500">
+
+We can see that the plugin's execution time obviously goes up the more classes and `SLF4J` log statements there are in the source code,
+but even for a project with 10,000 classes the compilation time is only ~2 seconds.
+
+
 ### Configuration
 There are several parameters you can overwrite:
 ```xml
@@ -138,11 +148,6 @@ public class LoggingTest {
 - [Apache Commons IO](https://commons.apache.org/proper/commons-io/) for FileUtils
 - Built with Java 17
 - [JMH](https://github.com/openjdk/jmh) for benchmarks
-
-
-## TODO
-- Analyze compile time
-- Analyze .jar size
 
 
 This project is licensed under the terms of the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.txt).

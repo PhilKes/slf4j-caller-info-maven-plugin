@@ -10,10 +10,13 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
+@Warmup(iterations = 1)
 public class Log4jCallerInfoCompileBenchmark {
     public static final String SLF_4_J_CALLER_INFO_INJECT = "slf4j-caller-info:inject";
-    public static final String TEST_LOG_TEMPLATE_CLASS = "io/github/philkes/benchmark/log4j2/template/Log.java";
-    public static final String TEST_LOG_CLASS_PATTERN = "io/github/philkes/benchmark/log4j2/test/Log%d.java";
+    public static final String TEST_LOG_TEMPLATE_CLASS_NAME = "CallerInfoInjectionLog";
+    public static final String TEST_LOG_TEMPLATE_CLASS_PACKAGE = "io/github/philkes/benchmark/log4j2/template";
+    public static final String TEST_LOG_CLASS_PACKAGE = "io/github/philkes/benchmark/log4j2/test";
+    public static final String TEST_LOG_CLASS_PATTERN = TEST_LOG_CLASS_PACKAGE + "/"+TEST_LOG_TEMPLATE_CLASS_NAME+"%d.java";
     public static final String MAIN_JAVA_PACKAGE_PATH = "./log4j2-compiletime/src/main/java/";
     private static final Runtime rt = Runtime.getRuntime();
 
@@ -21,7 +24,7 @@ public class Log4jCallerInfoCompileBenchmark {
         try {
             FileUtils.copyFile(sourceClassFile, destinationClassFile);
             String str = FileUtils.readFileToString(destinationClassFile, StandardCharsets.UTF_8);
-            str = str.replace("class Log", "class Log" + idx);
+            str = str.replace("class " + TEST_LOG_TEMPLATE_CLASS_NAME, "class " + TEST_LOG_TEMPLATE_CLASS_NAME + idx);
             str = str.replace("log4j2.template", "log4j2.test");
             FileUtils.writeStringToFile(destinationClassFile, str, StandardCharsets.UTF_8);
         } catch (IOException e) {
@@ -29,8 +32,8 @@ public class Log4jCallerInfoCompileBenchmark {
         }
     }
 
-    public static void deleteClass(File classFile) {
-        classFile.delete();
+    public static boolean deleteClass(File classFile) {
+        return classFile.delete();
     }
 
     public static int executeCli(String command) {
@@ -60,7 +63,10 @@ public class Log4jCallerInfoCompileBenchmark {
                 System.err.println(line);
             }
             synchronized (pr) {
-                return pr.waitFor();
+                if (pr.waitFor() != 0) {
+                    throw new RuntimeException("CLI command " + command + " failed!");
+                }
+                return 0;
             }
         } catch (IOException | InterruptedException ex) {
             throw new RuntimeException(ex);
@@ -74,46 +80,59 @@ public class Log4jCallerInfoCompileBenchmark {
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void average1Class(State1Class e) {
-        executeCli(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
+        executeCliWithLog(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void average10Class(State10Class e) {
-        executeCli(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
+        executeCliWithLog(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void average100Class(State100Class e) {
+        executeCliWithLog(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void average1000Class(State1000Class e) {
-        executeCli(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
+        executeCliWithLog(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void average10000Class(State10000Class e) {
-        executeCli(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
+        executeCliWithLog(String.format("mvn -f %s/pom.xml %s", e.projectPath, SLF_4_J_CALLER_INFO_INJECT));
     }
 
 
     public static void setup(int nClasses, String projectPath) {
+        File testLogPackageFolder = new File(MAIN_JAVA_PACKAGE_PATH + TEST_LOG_CLASS_PACKAGE);
+        try {
+            FileUtils.deleteDirectory(testLogPackageFolder);
+            if (!testLogPackageFolder.mkdir()) {
+                throw new RuntimeException("Directory " + testLogPackageFolder + " was not created properly!");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         for (int i = 0; i < nClasses; i++) {
             File destClassFile = new File(MAIN_JAVA_PACKAGE_PATH + String.format(TEST_LOG_CLASS_PATTERN, i));
-            copyClass(new File(MAIN_JAVA_PACKAGE_PATH + TEST_LOG_TEMPLATE_CLASS), destClassFile, i);
+            copyClass(new File(MAIN_JAVA_PACKAGE_PATH + TEST_LOG_TEMPLATE_CLASS_PACKAGE + "/" + TEST_LOG_TEMPLATE_CLASS_NAME+ ".java"), destClassFile, i);
         }
-        int result = executeCli(String.format("mvn -f %s/pom.xml clean compile", projectPath));
+        int result = executeCliWithLog(String.format("mvn -f %s/pom.xml clean compile", projectPath));
         if (result != 0) {
             throw new RuntimeException("Setup 'mvn clean compile' failed!");
         }
     }
 
     public static void tearDown(int nClasses) {
-        for (int i = 0; i < nClasses; i++) {
-            deleteClass(new File(String.format(MAIN_JAVA_PACKAGE_PATH + TEST_LOG_CLASS_PATTERN, i)));
-        }
     }
 
     @State(Scope.Benchmark)
@@ -134,7 +153,7 @@ public class Log4jCallerInfoCompileBenchmark {
 
         @Setup(Level.Invocation)
         public void up() {
-            setup(nClasses,projectPath);
+            setup(nClasses, projectPath);
         }
 
         @TearDown(Level.Invocation)
@@ -155,6 +174,14 @@ public class Log4jCallerInfoCompileBenchmark {
 
         public State10Class() {
             super(10);
+        }
+
+    }
+
+    public static class State100Class extends StateNClass {
+
+        public State100Class() {
+            super(100);
         }
     }
 
@@ -179,7 +206,7 @@ public class Log4jCallerInfoCompileBenchmark {
         setup(nClasses, projectPath);
         for (int i = 0; i < nClasses; i++) {
             File destClassFile = new File(String.format("./log4j2-compiletime/src/main/java/%s", String.format(TEST_LOG_CLASS_PATTERN, i)));
-            copyClass(new File(String.format("./log4j2-compiletime/src/main/java/%s", TEST_LOG_TEMPLATE_CLASS)), destClassFile, i);
+            copyClass(new File(String.format("./log4j2-compiletime/src/main/java/%s/%s", TEST_LOG_TEMPLATE_CLASS_PACKAGE, TEST_LOG_TEMPLATE_CLASS_NAME)), destClassFile, i);
         }
 
         executeCliWithLog(String.format("mvn -f %s/pom.xml %s", projectPath, SLF_4_J_CALLER_INFO_INJECT));
