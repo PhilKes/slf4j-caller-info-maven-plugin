@@ -20,7 +20,7 @@ Add the plugin to your `pom.xml`:
         <plugin>
             <groupId>io.github.philkes</groupId>
             <artifactId>slf4j-caller-info-maven-plugin</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
             <executions>
                 <execution>
                     <goals>
@@ -101,7 +101,7 @@ As for the time it takes the `inject` goal to execute, the compilation time of t
 <img src="./benchmark/results/results-compiletime.png" width="500">
 
 We can see that the plugin's execution time obviously goes up the more classes and `SLF4J` log statements there are in the source code,
-but even for a project with 10,000 classes the compilation time is only ~2 seconds.
+but even for a project with 10,000 classes the compilation time is ~2 seconds, which is only about twice as long as with only 1 class.
 
 
 ### Configuration
