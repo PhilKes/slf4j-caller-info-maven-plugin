@@ -20,7 +20,7 @@ Add the plugin to your `pom.xml`:
         <plugin>
             <groupId>io.github.philkes</groupId>
             <artifactId>slf4j-caller-info-maven-plugin</artifactId>
-            <version>1.0.1</version>
+            <version>1.1.0-SNAPSHOT</version>
             <executions>
                 <execution>
                     <goals>
@@ -113,8 +113,13 @@ There are several parameters you can overwrite:
     <injection>%class:%line</injection>
     <!-- MDC parameter name for the injection, this parameter has to be present in your logging.pattern ('%X{callerInformation}') -->
     <injectionMdcParameter>callerInformation</injectionMdcParameter>
-    <!-- Regex for specifying which packages/classfiles should be injected into -->
-    <filterClasses>.*</filterClasses>
+    <!-- Regex for specifying which packages/classfiles should be injected into (path and class-file name) -->
+    <filters>
+        <includes>
+            <include>.*</include>
+        </includes>
+        <excludes></excludes>
+    </filters>
     <!-- Specify log levels to be injected to -->
     <levels>TRACE,DEBUG,INFO,WARN,ERROR</levels>
     <!-- Whether or not to print the package-name of the class, if '%class' is present in 'injection' parameter -->
@@ -151,3 +156,7 @@ public class LoggingTest {
 
 
 This project is licensed under the terms of the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.txt).
+
+## TODOS
+- Make injection points configurable (e.g. for LOG4J Wrapper Classes)
+- Include/Excludes as List configurations

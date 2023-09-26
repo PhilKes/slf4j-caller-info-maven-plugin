@@ -44,10 +44,10 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
     File target;
 
     /**
-     * Regex filter to only inject into specific Java classes
+     * Regex filters to only inject into specific Java classes
      */
-    @Parameter(defaultValue = ".*")
-    String filterClasses;
+    @Parameter
+    ClassFilters filters = ClassFilters.DEFAULT_FILTERS;
 
     /**
      * Set of SLF4J log Levels to which should be injected to
@@ -74,7 +74,7 @@ public class Slf4jCallerInfoMojo extends AbstractMojo {
         }
         log.info(String.format("Make sure to add the MDC parameter '%s' to your logging pattern, otherwise they wont be printed in your logs", injectionMdcParameter));
         try {
-            new CallerInfoLogsClassWriter(target, filterClasses, levels, injectionMdcParameter, injection, includePackageName, log)
+            new CallerInfoLogsClassWriter(target, filters, levels, injectionMdcParameter, injection, includePackageName, log)
                     .execute();
         } catch (IOException e) {
             throw new RuntimeException(e);

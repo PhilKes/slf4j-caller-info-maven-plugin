@@ -22,7 +22,7 @@ import java.util.Set;
 public class CallerInfoLogsClassWriter {
 
     private final File targetClassDir;
-    private final String filterClasses;
+    private final ClassFilters filters;
     private final Set<Level> levels;
 
     private final String injectionMdcParameter;
@@ -31,10 +31,10 @@ public class CallerInfoLogsClassWriter {
 
     private final Log log;
 
-    public CallerInfoLogsClassWriter(File target, String filterClasses, Set<Level> levels, String injectionMdcParameter,
+    public CallerInfoLogsClassWriter(File target, ClassFilters filters, Set<Level> levels, String injectionMdcParameter,
                                      String injection, Boolean includePackageName, Log log) throws IOException {
         this.targetClassDir = target;
-        this.filterClasses = filterClasses;
+        this.filters = filters;
         this.levels = levels;
         this.injectionMdcParameter = injectionMdcParameter;
         this.injection = injection;
@@ -63,25 +63,18 @@ public class CallerInfoLogsClassWriter {
     }
 
     /**
-     * Loops through {@link #targetClassDir} directory recursively with the given {@link #filterClasses} filter and
+     * Loops through {@link #targetClassDir} directory recursively with the given {@link #filters} filter and
      * writes the injected class files back to the target directory
      *
      * @throws IOException if {@link #targetClassDir} contains invalid {@code .class} files
      */
     public void execute() throws IOException {
         log.info(String.format("Searching for %s usages in all .class files in %s with filterClasses='%s', injection='%s', includePackageName='%s'",
-                AddCallerInfoToLogsVisitor.SLF4J_LOGGER_FQN, targetClassDir.toPath(), filterClasses, injection, String.valueOf(includePackageName)));
+                AddCallerInfoToLogsVisitor.SLF4J_LOGGER_FQN, targetClassDir.toPath(), filters, injection, includePackageName));
         if (!targetClassDir.isDirectory()) {
             throw new IllegalArgumentException(String.format("Path %s is not a valid target/classes directory!", targetClassDir.toPath()));
         }
-        Collection<File> files = FileUtils.listFiles(targetClassDir,
-                new AbstractFileFilter() {
-                    @Override
-                    public boolean accept(File file) {
-                        String format = String.format(".*%s\\.class", filterClasses);
-                        return file.toString().matches(format);
-                    }
-                }, DirectoryFileFilter.DIRECTORY);
+        Collection<File> files = FileUtils.listFiles(targetClassDir, new ClassFileFilter(filters), DirectoryFileFilter.DIRECTORY);
         for (File classFile : files) {
             Files.write(classFile.toPath(), addCallerInfoToLogs(classFile), StandardOpenOption.WRITE);
         }
