@@ -4,7 +4,7 @@
     <groupId>io.github.philkes</groupId>
     <artifactId>slf4j-caller-info-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>1.0.1</version>
+    <version>1.1.0-SNAPSHOT</version>
     <name>SLF4J Caller-Information Injection Plugin</name>
     <description>Maven plugin adding caller-information to all SLF4J Log statements during compilation</description>
     <url>https://github.com/PhilKes/slfj4-caller-info-maven-plugin</url>
@@ -80,6 +80,13 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-ext</artifactId>
             <version>1.7.32</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.9.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
