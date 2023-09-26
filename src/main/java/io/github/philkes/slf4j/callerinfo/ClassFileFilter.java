@@ -4,6 +4,9 @@ import org.apache.commons.io.filefilter.AbstractFileFilter;
 
 import java.io.File;
 
+/**
+ * Filter to only accept Files that match given {@link ClassFilters}
+ */
 public class ClassFileFilter extends AbstractFileFilter {
 
     private final ClassFilters filters;

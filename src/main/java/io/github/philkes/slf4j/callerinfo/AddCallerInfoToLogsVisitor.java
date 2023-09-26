@@ -4,13 +4,8 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
-import org.slf4j.event.Level;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
@@ -20,6 +15,12 @@ import static org.objectweb.asm.Opcodes.INVOKESTATIC;
  * and injects the caller-information with {@link MDC#put(String, String)} calls before every log statement
  */
 public class AddCallerInfoToLogsVisitor extends ClassVisitor {
+
+    /**
+     * Pattern for injectedMethod parameter, with placeholders for fully qualified class-name + method name
+     */
+    public static final String INJECTED_METHOD_PATTERN = "%s#%s";
+
     /**
      * Fully package path of {@link org.slf4j.Logger}
      */
@@ -51,27 +52,30 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
     public static final String CONVERSION_METHOD = "%method";
     public static final String CONVERSION_LINE = "%line";
 
-    public static final Set<String> CONVERSIONS = new HashSet<>(Arrays.asList(CONVERSION_CLASS, CONVERSION_METHOD, CONVERSION_LINE));
+    /**
+     * Set of allowed conversion words
+     */
+    protected static final Set<String> CONVERSIONS = new HashSet<>(Arrays.asList(CONVERSION_CLASS, CONVERSION_METHOD, CONVERSION_LINE));
 
     private final String className;
-    private final Set<Level> levels;
     private final String injectionMdcParameter;
     private final String injection;
     private final Boolean includePackageName;
+    private final List<String> injectedMethods;
 
     /**
      * Keeping track of how many log statements have been found in the class for logging purposes
      */
     private int logStatementsCounter = 0;
 
-    public AddCallerInfoToLogsVisitor(ClassVisitor cv, String className, Set<Level> levels,
-                                      String injectionMdcParameter, String injection, Boolean includePackageName) {
+    public AddCallerInfoToLogsVisitor(ClassVisitor cv, String className, String injectionMdcParameter,
+                                      String injection, Boolean includePackageName, List<String> injectedMethods) {
         super(ASM7, cv);
         this.className = className;
-        this.levels = levels;
         this.injectionMdcParameter = injectionMdcParameter;
         this.injection = injection;
         this.includePackageName = includePackageName;
+        this.injectedMethods = injectedMethods;
         this.cv = cv;
     }
 
@@ -125,7 +129,7 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
         private boolean isLastMethodCallMDCPut = false;
 
         /**
-         * Searches for {@link Logger} calls to specified log levels ({@link #levels}) and adds
+         * Searches for {@link AddCallerInfoToLogsVisitor#injectedMethods} calls and adds
          * the caller-location-information into the MDC context which can be used to output the caller information
          * of the log statement.
          *
@@ -136,10 +140,10 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
          */
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-            boolean isSlf4jLogOnSpecifiedLevel = Objects.equals(owner, SLF4J_LOGGER_FQN) && name.matches(levels.stream()
-                    .map(level -> level.toString().toLowerCase())
-                    .collect(Collectors.joining("|")));
-            if (isSlf4jLogOnSpecifiedLevel && !isLastMethodCallMDCPut) {
+            boolean isInjectedMethodCall = injectedMethods.stream()
+                    .anyMatch(injectedMethod -> String.format(INJECTED_METHOD_PATTERN, owner, name).matches(injectedMethod));
+
+            if (isInjectedMethodCall && !isLastMethodCallMDCPut) {
                 logStatementsCounter++;
                 super.visitLdcInsn(injectionMdcParameter);
                 super.visitLdcInsn(injection
@@ -150,7 +154,7 @@ public class AddCallerInfoToLogsVisitor extends ClassVisitor {
                 super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_PUT_METHOD_NAME, SLF4J_MDC_PUT_METHOD_DESCRIPTOR, false);
             }
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-            if (isSlf4jLogOnSpecifiedLevel) {
+            if (isInjectedMethodCall) {
                 if (!isLastMethodCallMDCPut) {
                     super.visitLdcInsn(injectionMdcParameter);
                     super.visitMethodInsn(INVOKESTATIC, SLF4J_MDC_FQN, SLF4J_MDC_REMOVE_METHOD_NAME, SLF4J_MDC_REMOVE_METHOD_DESCRIPTOR, false);

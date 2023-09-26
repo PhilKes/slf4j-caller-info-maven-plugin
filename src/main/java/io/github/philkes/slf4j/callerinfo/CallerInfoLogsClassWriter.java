@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Utilizing ASM {@link ClassReader} and {@link ClassWriter} to modify the compiled Java classes
@@ -23,22 +25,22 @@ public class CallerInfoLogsClassWriter {
 
     private final File targetClassDir;
     private final ClassFilters filters;
-    private final Set<Level> levels;
 
     private final String injectionMdcParameter;
     private final String injection;
     private final Boolean includePackageName;
+    private final List<String> injectedMethods;
 
     private final Log log;
 
-    public CallerInfoLogsClassWriter(File target, ClassFilters filters, Set<Level> levels, String injectionMdcParameter,
-                                     String injection, Boolean includePackageName, Log log) throws IOException {
+    public CallerInfoLogsClassWriter(File target, ClassFilters filters, String injectionMdcParameter,
+                                     String injection, Boolean includePackageName, List<String> injectedMethods, Log log) throws IOException {
         this.targetClassDir = target;
         this.filters = filters;
-        this.levels = levels;
         this.injectionMdcParameter = injectionMdcParameter;
         this.injection = injection;
         this.includePackageName = includePackageName;
+        this.injectedMethods = injectedMethods;
         this.log = log;
     }
 
@@ -52,8 +54,8 @@ public class CallerInfoLogsClassWriter {
         log.debug(String.format("Searching for log statements in %s", classFile.toPath()));
         ClassReader reader = new ClassReader(new FileInputStream((classFile)));
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-        AddCallerInfoToLogsVisitor callerInfoLogAdapter = new AddCallerInfoToLogsVisitor(writer, reader.getClassName(), levels,
-                injectionMdcParameter, injection, includePackageName);
+        AddCallerInfoToLogsVisitor callerInfoLogAdapter = new AddCallerInfoToLogsVisitor(writer, reader.getClassName(),
+                injectionMdcParameter, injection, includePackageName, injectedMethods);
         reader.accept(callerInfoLogAdapter, ClassReader.EXPAND_FRAMES);
         int logStatementsFound = callerInfoLogAdapter.getLogStatementsCounter();
         if (logStatementsFound > 0) {
@@ -70,7 +72,8 @@ public class CallerInfoLogsClassWriter {
      */
     public void execute() throws IOException {
         log.info(String.format("Searching for %s usages in all .class files in %s with filterClasses='%s', injection='%s', includePackageName='%s'",
-                AddCallerInfoToLogsVisitor.SLF4J_LOGGER_FQN, targetClassDir.toPath(), filters, injection, includePackageName));
+                injectedMethods.stream().collect(Collectors.joining(",", "[", "]")),
+                targetClassDir.toPath(), filters, injection, includePackageName));
         if (!targetClassDir.isDirectory()) {
             throw new IllegalArgumentException(String.format("Path %s is not a valid target/classes directory!", targetClassDir.toPath()));
         }

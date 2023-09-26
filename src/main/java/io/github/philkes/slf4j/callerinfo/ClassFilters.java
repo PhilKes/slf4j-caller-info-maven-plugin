@@ -3,10 +3,20 @@ package io.github.philkes.slf4j.callerinfo;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Filters for class files with includes and excludes regex patterns
+ */
 public class ClassFilters {
-
-    public static final ClassFilters DEFAULT_FILTERS;
+    /**
+     * Regex pattern with placeholder for class-file regex
+     */
     public static final String CLASS_FILE_REGEX_PATTERN = ".*%s\\.class";
+
+    /**
+     * By default every class file in injected into
+     */
+    public static final ClassFilters DEFAULT_FILTERS;
+
 
     static {
         DEFAULT_FILTERS = new ClassFilters();

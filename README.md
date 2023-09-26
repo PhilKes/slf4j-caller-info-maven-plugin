@@ -3,7 +3,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/PhilKes/slf4j-caller-info-maven-plugin/badge.svg)](https://snyk.io/test/github/PhilKes/slf4j-caller-info-maven-plugin)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue)](./LICENSE)
 
-Maven plugin to **inject caller-location-information** to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (`info()`, etc.) in your compiled code.
+Maven plugin to **inject caller-location-information** to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (`info()`, etc.) in your compiled code. Also allows to inject caller-information when using wrapper classes/methods (see [Configuration/injectedMethods](#configuration)).
 
 
 ## Description
@@ -120,8 +120,15 @@ There are several parameters you can overwrite:
         </includes>
         <excludes></excludes>
     </filters>
-    <!-- Specify log levels to be injected to -->
-    <levels>TRACE,DEBUG,INFO,WARN,ERROR</levels>
+    <!-- Method descriptors to configure for which method calls the caller-information should be injected to -->
+    <!-- By default all common SLF4J log methods are injected into, but this parameter also allows to inject to custom methods, e.g. when using wrapper classes for logging -->
+    <injectedMethods>
+        <injectedMethod>org/slf4j/Logger#info</injectedMethod>
+        <injectedMethod>org/slf4j/Logger#warn</injectedMethod>
+        <injectedMethod>org/slf4j/Logger#error</injectedMethod>
+        <injectedMethod>org/slf4j/Logger#debug</injectedMethod>
+        <injectedMethod>org/slf4j/Logger#trace</injectedMethod>
+    </injectedMethods>
     <!-- Whether or not to print the package-name of the class, if '%class' is present in 'injection' parameter -->
     <includePackageName>false</includePackageName>
     <!-- Target directory which contains the compiled '.class' files -->
@@ -156,7 +163,3 @@ public class LoggingTest {
 
 
 This project is licensed under the terms of the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.txt).
-
-## TODOS
-- Make injection points configurable (e.g. for LOG4J Wrapper Classes)
-- Include/Excludes as List configurations
