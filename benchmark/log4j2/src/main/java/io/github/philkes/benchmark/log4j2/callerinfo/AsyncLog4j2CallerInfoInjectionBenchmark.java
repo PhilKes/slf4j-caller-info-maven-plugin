@@ -1,4 +1,3 @@
-/*
 package io.github.philkes.benchmark.log4j2.callerinfo;
 
 import org.apache.logging.log4j.LogManager;
@@ -89,4 +88,3 @@ public class AsyncLog4j2CallerInfoInjectionBenchmark {
 
     }
 }
-*/

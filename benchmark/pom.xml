@@ -211,7 +211,11 @@ THE POSSIBILITY OF SUCH DAMAGE.
                                 <goal>inject</goal>
                             </goals>
                             <configuration>
-                                <filterClasses>CallerInfoInjection.*</filterClasses>
+                                <filters>
+                                    <includes>
+                                        <include>CallerInfoInjection.*</include>
+                                    </includes>
+                                </filters>
                             </configuration>
                         </execution>
                     </executions>

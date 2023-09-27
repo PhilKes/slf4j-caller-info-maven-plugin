@@ -39,6 +39,6 @@
 
   <root level="debug">
     <appender-ref ref="ASYNC" />
-    <appender-ref ref="CONSOLE" />
+<!--    <appender-ref ref="CONSOLE" />-->
   </root>
 </configuration>

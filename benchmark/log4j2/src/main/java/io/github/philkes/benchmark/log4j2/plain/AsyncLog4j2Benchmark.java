@@ -1,4 +1,3 @@
-/*
 package io.github.philkes.benchmark.log4j2.plain;
 
 import org.apache.logging.log4j.LogManager;
@@ -90,4 +89,3 @@ public class AsyncLog4j2Benchmark {
 
     }
 }
-*/
