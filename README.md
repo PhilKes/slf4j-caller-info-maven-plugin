@@ -3,10 +3,13 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/PhilKes/slf4j-caller-info-maven-plugin/badge.svg)](https://snyk.io/test/github/PhilKes/slf4j-caller-info-maven-plugin)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue)](./LICENSE)
 
-Maven plugin to **inject caller-location-information** to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (`info()`, etc.) in your compiled code. Also allows to inject caller-information when using wrapper classes/methods (see [Configuration/injectedMethods](#configuration)).
+Maven plugin to **inject caller-location-information** to all [SLF4J Logger](https://www.slf4j.org/api/org/slf4j/Logger.html) log statement invocations (`info()`, etc.) in your compiled code, as a better alternative to SLF4J caller location information. Also allows to inject caller-information when using wrapper classes/methods (see [Configuration/injectedMethods](#configuration)).
 
 
 ## Description
+By default SLF4J implementations such as `logback` or `logf4j` offer to log the caller-location (e.g. [Logback/Layouts#method](https://logback.qos.ch/manual/layouts.html#method)), but this comes at a huge performance loss (see [Apache/Log4j2-Performance-Caller-Location](https://logging.apache.org/log4j/2.x/performance.html#asynchronous-logging-with-caller-location-information)). 
+
+Instead of evaluating the caller-location (method, source code line number), this plugin injects the caller-location info to all log statements when building the project.
 The caller-location-information injection is done with a [MDC.put(...)](https://www.slf4j.org/api/org/slf4j/MDC.html#put-java.lang.String-java.lang.String-) call before every SLF4J log invocation, putting the class name, line number (optionally also method name) into the MDC in the compiled `.class` files. This allows to conveniently **print out where exactly in the code the log statement originates from** for every single log statement, without any overhead or performance loss, by simply adding the **Mapped Diagnostic Context** ([MDC](https://logback.qos.ch/manual/mdc.html)) parameter `callerInformation` to your logging-pattern configuration. It can therefore be used with any SLF4J implementation, such as [logback](https://logback.qos.ch/), [log4j2](https://logging.apache.org/log4j/2.x/), etc.
 
 Since this plugin adds the code before runtime, there is **nearly no performance loss** by injecting the caller-location-information in comparison to using e.g. the `%class` or `%line` pattern parameters (see [Log4j2 manual](https://logging.apache.org/log4j/2.x/manual/layouts.html#Patterns) or [Logback manual](https://logback.qos.ch/manual/layouts.html#class) in your logging pattern, that looks for the caller-information on the stacktrace during runtime which is very costly.
