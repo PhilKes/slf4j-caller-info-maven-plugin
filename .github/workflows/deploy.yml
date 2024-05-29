@@ -3,11 +3,20 @@ name: Deploy to Maven Central
 on:
   release:
     types: [released]
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build with Maven
+        run: mvn -B clean install
+  deploy:
+    if: ${{ github.event.action }} == 'release'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Set up Maven Central Repository
