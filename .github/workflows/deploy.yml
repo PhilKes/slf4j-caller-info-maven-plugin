@@ -15,7 +15,7 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean install
   deploy:
-    if: ${{ github.event.action }} == 'release'
+    if: ${{ github.event_name == 'release' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
